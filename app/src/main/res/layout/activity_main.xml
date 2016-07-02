@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:orientation = "vertical"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+tools:context=".GlassUI10"
+android:id="@+id/Main"
+android:touchscreenBlocksFocus="false">
+
+    <RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+        android:id="@+id/ARParentLayout"
+        android:layout_alignParentTop="true">
+
+    <RelativeLayout
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:id="@+id/ARLayout"
+        android:orientation="vertical"
+        android:layout_width="320dp"
+        android:layout_height="fill_parent"
+        android:layout_centerInParent="true">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/ARINLayout"></FrameLayout>
+    </RelativeLayout><requestFocus/>
+
+        <TextView
+            android:minLines="1"
+            android:maxLines = "7"
+            android:scrollbars = "vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:id="@+id/LogMesg"
+            android:layout_weight="0.35"
+            android:textSize="10dp"
+            android:clickable="false"
+            android:gravity="right"
+            android:text="**********LogMsg**********"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:textColor="#590099"
+            android:background="#F2F1D7"
+            android:alpha="0.5"
+            android:singleLine="false" />
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_gravity="left|bottom"
+            android:id="@+id/linearLayout"
+            android:alpha="0.5"
+            android:background="#F2F1D7">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="DA:"
+                android:id="@+id/DAText"
+                android:layout_alignParentStart="true"
+                android:layout_above="@+id/HDAText"
+                android:layout_alignParentLeft="true"
+                android:textColor="#590099" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="DD:"
+                android:id="@+id/DDText"
+                android:layout_alignParentStart="true"
+                android:layout_above="@+id/FDAText"
+                android:layout_alignParentLeft="true"
+                android:textColor="#590099" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="FDA:"
+                android:id="@+id/FDAText"
+                android:layout_alignParentStart="true"
+                android:layout_above="@+id/DAText"
+                android:layout_alignParentLeft="true"
+                android:textColor="#590099" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="HDA:"
+                android:id="@+id/HDAText"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:textColor="#590099" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="PDD:"
+                android:id="@+id/PDDText"
+                android:layout_alignParentStart="true"
+                android:layout_above="@+id/DDText"
+                android:layout_alignParentLeft="true"
+                android:textColor="#590099" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:weightSum="1"
+            android:layout_weight="0.1"
+            android:id="@+id/linearLayout2"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true">
+
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/IPText"
+                android:nextFocusUp="@id/IPText"
+                android:nextFocusLeft="@id/IPText"
+                android:layout_weight="0"
+                android:text="192.168.1.84"
+                android:textSize="15dp"
+                android:gravity="center"
+                android:inputType="number|textPostalAddress"
+                android:paddingLeft="25dp"
+                android:paddingRight="25dp" />
+
+            <Button
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Connect"
+                android:id="@+id/SockBut"
+                android:layout_weight="0"
+                android:clickable="false"
+                android:gravity="center"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+</RelativeLayout>
+
+

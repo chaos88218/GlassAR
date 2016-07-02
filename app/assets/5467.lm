@@ -1,0 +1,53 @@
+Language model created by QuickLM on Mon Dec  7 05:02:19 EST 2015
+Copyright (c) 1996-2010 Carnegie Mellon University and Alexander I. Rudnicky
+
+The model is in standard ARPA format, designed by Doug Paul while he was at MITRE.
+
+The code that was used to produce this language model is available in Open Source.
+Please visit http://www.speech.cs.cmu.edu/tools/ for more information
+
+The (fixed) discount mass is 0.5. The backoffs are computed using the ratio method.
+This model based on a corpus of 7 sentences and 9 words
+
+\data\
+ngram 1=9
+ngram 2=14
+ngram 3=7
+
+\1-grams:
+-0.7782 </s> -0.3010
+-0.7782 <s> -0.2218
+-1.6232 CALIBRATE -0.2218
+-1.6232 CONNECT -0.2218
+-1.6232 GLASS -0.2218
+-1.6232 MODEL -0.2218
+-1.6232 OFF -0.2218
+-1.6232 SHOT -0.2218
+-1.6232 VOICE -0.2218
+
+\2-grams:
+-1.1461 <s> CALIBRATE 0.0000
+-1.1461 <s> CONNECT 0.0000
+-1.1461 <s> GLASS 0.0000
+-1.1461 <s> MODEL 0.0000
+-1.1461 <s> OFF 0.0000
+-1.1461 <s> SHOT 0.0000
+-1.1461 <s> VOICE 0.0000
+-0.3010 CALIBRATE </s> -0.3010
+-0.3010 CONNECT </s> -0.3010
+-0.3010 GLASS </s> -0.3010
+-0.3010 MODEL </s> -0.3010
+-0.3010 OFF </s> -0.3010
+-0.3010 SHOT </s> -0.3010
+-0.3010 VOICE </s> -0.3010
+
+\3-grams:
+-0.3010 <s> CALIBRATE </s>
+-0.3010 <s> CONNECT </s>
+-0.3010 <s> GLASS </s>
+-0.3010 <s> MODEL </s>
+-0.3010 <s> OFF </s>
+-0.3010 <s> SHOT </s>
+-0.3010 <s> VOICE </s>
+
+\end\
