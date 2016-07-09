@@ -1,7 +1,6 @@
 package com.example.miles.glassar.LoaderNCalculater;
 
-import android.util.Log;
-
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -14,8 +13,31 @@ import java.nio.ByteOrder;
  * Created by miles on 2015/9/23.
  */
 public class FileReader {
+    public static float[] ARSReadTxt(String fileName) {
+        float[] ospVert = new float[17];
+        BufferedReader br;
+        try {
+            br = new BufferedReader(new java.io.FileReader("/sdcard/" + fileName));
 
-    //TODO : Add AST Cali-file Reader;
+            String str = br.readLine();
+            ospVert[0] = Float.valueOf(str);
+
+            str = br.readLine();
+            String[] matrix = str.split("\\t");
+            for (int i = 0; i < matrix.length; i++) {
+                ospVert[i + 1] = Float.valueOf(matrix[i]);
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return new float[]{Float.NaN};
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new float[]{Float.NaN};
+        }
+        return ospVert;
+    }
+
     public static float[] ARTReadBinary(String fileName) {
         double[] ospVert = new double[18];
         File file = new File("/sdcard/" + fileName);
@@ -30,7 +52,6 @@ public class FileReader {
             for (int Line = 0; Line < 18; Line++) {
                 ByteBuffer temp = ByteBuffer.wrap(buffer, Line * 8, 8);
                 ospVert[Line] = temp.getDouble();
-                Log.v("read", ospVert[Line] + "");
             }
             inputStream.close();
         } catch (FileNotFoundException e) {
@@ -58,9 +79,9 @@ public class FileReader {
         };
     }
 
-    public static float[] ReadStlBinary(String fileName){
+    public static float[] ReadStlBinary(String fileName) {
         float[] ospVert = new float[0];
-        File file = new File("/sdcard/"+fileName);
+        File file = new File("/sdcard/" + fileName);
         InputStream inputStream = null;
 
         try {
@@ -71,17 +92,16 @@ public class FileReader {
             inputStream.read(buffer);
             count = ByteBuffer.wrap(buffer, 80, 4).order(ByteOrder.LITTLE_ENDIAN).getInt();
 
-            ospVert = new float[count*9];
-            buffer = new byte[50*count];
+            ospVert = new float[count * 9];
+            buffer = new byte[50 * count];
             inputStream.read(buffer);
             int num1 = 0;
             int num2 = 0;
 
             for (int Line = 0; Line < count; Line++) {
-                ByteBuffer temp = ByteBuffer.wrap(buffer, num2+12, 36).order(ByteOrder.LITTLE_ENDIAN);
-                for (int jjj = 0; jjj<9; jjj++)
-                {
-                    ospVert[num1+jjj] = temp.getFloat();
+                ByteBuffer temp = ByteBuffer.wrap(buffer, num2 + 12, 36).order(ByteOrder.LITTLE_ENDIAN);
+                for (int jjj = 0; jjj < 9; jjj++) {
+                    ospVert[num1 + jjj] = temp.getFloat();
                 }
                 num1 += 9;
                 num2 += 50;
@@ -93,8 +113,8 @@ public class FileReader {
         } catch (IOException e) {
             e.printStackTrace();
             return new float[]{-1.0f};
-        }finally{
-            if(inputStream != null)
+        } finally {
+            if (inputStream != null)
                 try {
                     inputStream.close();
                 } catch (IOException e) {
@@ -106,12 +126,13 @@ public class FileReader {
         return ospVert;
     }
 
-    public static float[] ReadProjectSkullMarker(String projectName){
+    // TODO: rework file reader by  using BufferedReader
+    public static float[] ReadProjectSkullMarker(String projectName) {
         int floatArraycount = 0;
         float[] s_Markers = new float[27];
         char[] tempCharArray = new char[15];
 
-        File file = new File("/sdcard/"+projectName);
+        File file = new File("/sdcard/" + projectName);
         InputStream inputStream = null;
 
         try {
@@ -120,26 +141,24 @@ public class FileReader {
             byte[] buffer = new byte[1];
             int count = 0;
             int n = 0;
-            while(true)
-            {
+            while (true) {
                 inputStream.read(buffer);
-                if(buffer[0] == 13/* "/n" */)
-                {count++;}
+                if (buffer[0] == 13/* "/n" */) {
+                    count++;
+                }
 
-                if (count >24)
-                {break;}
+                if (count > 24) {
+                    break;
+                }
 
-                if(count > 14 && buffer[0] != 32 )
-                {
-                    tempCharArray[n] = (char)buffer[0];
+                if (count > 14 && buffer[0] != 32) {
+                    tempCharArray[n] = (char) buffer[0];
                     n++;
-                }else if (count > 14 && floatArraycount < 27)
-                {
+                } else if (count > 14 && floatArraycount < 27) {
                     s_Markers[floatArraycount] = Float.valueOf(String.valueOf(tempCharArray, 0, n));
                     floatArraycount++;
                     n = 0;
-                }else
-                {
+                } else {
                     n = 0;
                 }
             }
@@ -150,8 +169,8 @@ public class FileReader {
         } catch (IOException e) {
             e.printStackTrace();
             return new float[]{-1.0f};
-        }finally{
-            if(inputStream != null)
+        } finally {
+            if (inputStream != null)
                 try {
                     inputStream.close();
                 } catch (IOException e) {
@@ -162,12 +181,12 @@ public class FileReader {
         return s_Markers;
     }
 
-    public static float[] ReadArPoints(String projectName){
+    public static float[] ReadArPoints(String projectName) {
         int floatArraycount = 0;
         float[] s_Markers = new float[21];
         char[] tempCharArray = new char[15];
 
-        File file = new File("/sdcard/"+projectName);
+        File file = new File("/sdcard/" + projectName);
         InputStream inputStream = null;
 
         try {
@@ -175,23 +194,20 @@ public class FileReader {
 
             byte[] buffer = new byte[1];
             int n = 0;
-            while(true)
-            {
+            while (true) {
                 inputStream.read(buffer);
-                if (floatArraycount >= 21)
-                {break;}
+                if (floatArraycount >= 21) {
+                    break;
+                }
 
-                if(buffer[0] != '\t' && buffer[0] != '\n')
-                {
-                    tempCharArray[n] = (char)buffer[0];
+                if (buffer[0] != '\t' && buffer[0] != '\n') {
+                    tempCharArray[n] = (char) buffer[0];
                     n++;
-                }else if (floatArraycount < 21)
-                {
+                } else if (floatArraycount < 21) {
                     s_Markers[floatArraycount] = Float.valueOf(String.valueOf(tempCharArray, 0, n));
                     floatArraycount++;
                     n = 0;
-                }else
-                {
+                } else {
                     n = 0;
                 }
             }
@@ -202,8 +218,8 @@ public class FileReader {
         } catch (IOException e) {
             e.printStackTrace();
             return new float[]{-1.0f};
-        }finally{
-            if(inputStream != null)
+        } finally {
+            if (inputStream != null)
                 try {
                     inputStream.close();
                 } catch (IOException e) {

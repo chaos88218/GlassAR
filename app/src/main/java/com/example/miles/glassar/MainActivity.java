@@ -2,6 +2,7 @@ package com.example.miles.glassar;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Environment;
@@ -41,9 +42,11 @@ public class MainActivity extends ARActivity {
 
     Handler mHandler = new Handler();
     private FrameLayout ARINLayout;
+    private MyARRenderer myARRenderer = new MyARRenderer();
 
     private SiMESpeechRecognizer mRecognizer;
     private SiMESpeechRecognitionListener mListener;
+    private boolean GL_TRANSLUCENT = true;
 
     private TextView DAout;
     private TextView DDout;
@@ -90,12 +93,24 @@ public class MainActivity extends ARActivity {
 
         RelativeLayout ARLayout = (RelativeLayout) findViewById(R.id.ARLayout);
         ARINLayout = (FrameLayout) findViewById(R.id.ARINLayout);
+        ARINLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                GL_TRANSLUCENT = !GL_TRANSLUCENT;
+                if (GL_TRANSLUCENT) {
+                    glView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+                    Log.e("GL", "GL_TRANSLUCENT");
+                } else {
+                    glView.getHolder().setFormat(PixelFormat.RGB_565);
+                    Log.e("GL", "RGB_565");
+                }
+            }
+        });
 
         IPadd = (EditText) findViewById(R.id.IPText);
         LogMes = (TextView) findViewById(R.id.LogMesg);
         LogMes.setMovementMethod(new ScrollingMovementMethod());
 
-        //TODO: Add Screen adjuster for calibration loading;
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
@@ -106,7 +121,6 @@ public class MainActivity extends ARActivity {
         ll.setMargins(0, (int) -((height - size.y) / 2.0f), 0, (int) -((height - size.y) / 2.0f));
         ARLayout.setLayoutParams(ll);
 
-        //TODO: Add switching glView function to close camera view
         SockConn.setOnClickListener(Connectlistener);
 
         mRecognizer = new SiMESpeechRecognizer(this);
@@ -233,7 +247,7 @@ public class MainActivity extends ARActivity {
 
     @Override
     protected ARRenderer supplyRenderer() {
-        return new MyARRenderer();
+        return myARRenderer;
     }
 
     @Override
@@ -319,8 +333,7 @@ public class MainActivity extends ARActivity {
             new Runnable() {
                 @Override
                 public void run() {
-                    if (MyARRenderer.AllSTLLoadingCheck[0] + MyARRenderer.AllSTLLoadingCheck[1] + MyARRenderer.AllSTLLoadingCheck[2] + MyARRenderer.AllSTLLoadingCheck[3]
-                            + MyARRenderer.AllSTLLoadingCheck[4] + MyARRenderer.AllSTLLoadingCheck[5] + MyARRenderer.AllSTLLoadingCheck[6] + MyARRenderer.AllSTLLoadingCheck[7] == 8) {
+                    if (myARRenderer.getAllSTLLoadingCheck_sum() == 8) {
                         SendtoUI("File: All Loaded!!!");
                         try {
                             int servPort = 59979;
@@ -492,38 +505,37 @@ public class MainActivity extends ARActivity {
                         }
                         SockConHandle(true);
                     } else {
-                        //TODO: Add calibration file checking
                         for (int iiii = 0; iiii < 8; iiii++) {
                             String temp = "";
-                            if (MyARRenderer.AllSTLLoadingCheck[iiii] == 0) {
+                            if (myARRenderer.getAllSTLLoadingCheck_index(iiii) == 0) {
                                 switch (iiii) {
                                     case 0: {
-                                        temp = "Project";
+                                        temp = "calipara";
                                     }
                                     break;
                                     case 1: {
-                                        temp = "Skull";
+                                        temp = "optical_param_left";
                                     }
                                     break;
                                     case 2: {
-                                        temp = "Maxilla";
+                                        temp = "skull";
                                     }
                                     break;
                                     case 3: {
-                                        temp = "Mandible";
+                                        temp = "maxilla";
                                     }
                                     break;
 
                                     case 4: {
-                                        temp = "Maxilla OSP";
+                                        temp = "mandible";
                                     }
                                     break;
                                     case 5: {
-                                        temp = "Mandible OSP";
+                                        temp = "max_OSP";
                                     }
                                     break;
                                     case 6: {
-                                        temp = "AR Points";
+                                        temp = "man_OSP";
                                     }
                                     break;
                                     case 7: {

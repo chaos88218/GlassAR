@@ -4,7 +4,6 @@ import android.opengl.GLES10;
 import android.util.Log;
 
 import com.example.miles.glassar.LoaderNCalculater.FileReader;
-import com.example.miles.glassar.MyARRenderer;
 
 import org.artoolkit.ar.base.rendering.RenderUtils;
 
@@ -13,7 +12,11 @@ import java.util.Arrays;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import static com.example.miles.glassar.LoaderNCalculater.VectorCal.*;
+import static com.example.miles.glassar.LoaderNCalculater.VectorCal.cross;
+import static com.example.miles.glassar.LoaderNCalculater.VectorCal.getAngleDeg;
+import static com.example.miles.glassar.LoaderNCalculater.VectorCal.getVecByPoint;
+import static com.example.miles.glassar.LoaderNCalculater.VectorCal.normalize;
+import static com.example.miles.glassar.LoaderNCalculater.VectorCal.rotAngMatrixMultiVec;
 
 /**
  * Created by miles on 2015/10/14.
@@ -27,9 +30,11 @@ public class Arpoints {
     private FloatBuffer vertexBuffer1;
     private FloatBuffer colorBuffer1;
 
+    int loaded = 0;
     float[] squareCoords;
+
     float[] aRTagPoints = new float[12];
-    static float[] skullMSARPoints = new float[9];
+    float[] skullMSARPoints = new float[9];
 
     float[] cTVn = new float[3];
     float[] rotVn = new float[3];
@@ -45,66 +50,62 @@ public class Arpoints {
     public Arpoints(String string) {
         squareCoords = FileReader.ReadArPoints(string);//man_OSP
 
-        if(squareCoords[0] != -1) {
+        if (squareCoords[0] != -1) {
             System.gc();
             Log.v("ApointsLoaded: ", "Loaded");
-            MyARRenderer.AllSTLLoadingCheck[6] = 1;
+            loaded = 1;
 
             aRTagPoints = Arrays.copyOfRange(squareCoords, 0, 12);
             skullMSARPoints = Arrays.copyOfRange(squareCoords, 12, 21);
 
-            for(int k = 0; k < aRTagPoints.length ;k++)
-            {
-                switch ((k+1)%3){
-                    case 1:{
+            for (int k = 0; k < aRTagPoints.length; k++) {
+                switch ((k + 1) % 3) {
+                    case 1: {
                         ameanX = ameanX + aRTagPoints[k];
                         break;
                     }
-                    case 2:{
+                    case 2: {
                         ameanY = ameanY + aRTagPoints[k];
                         break;
                     }
-                    case 0:{
+                    case 0: {
                         ameanZ = ameanZ + aRTagPoints[k];
                         break;
                     }
                 }
             }
 
-            ameanX = ameanX /4;
-            ameanY = ameanY /4;
-            ameanZ = ameanZ /4;
+            ameanX = ameanX / 4;
+            ameanY = ameanY / 4;
+            ameanZ = ameanZ / 4;
 
 
-            color = new float[aRTagPoints.length/3*4];
-            for(int i = 0; i < color.length ; i = i+4)
-            {
-                color[i+0] =1.0f;
-                color[i+1] =1.0f;
-                color[i+2] =1.0f;
-                color[i+3] =1.0f;
+            color = new float[aRTagPoints.length / 3 * 4];
+            for (int i = 0; i < color.length; i = i + 4) {
+                color[i + 0] = 1.0f;
+                color[i + 1] = 1.0f;
+                color[i + 2] = 1.0f;
+                color[i + 3] = 1.0f;
             }
 
 
-            color1 = new float[skullMSARPoints.length/3*4];
-            for(int i = 0; i < color1.length ; i = i+4)
-            {
-                color1[i+0] =1.0f;
-                color1[i+1] =0.0f;
-                color1[i+2] =0.0f;
-                color1[i+3] =1.0f;
+            color1 = new float[skullMSARPoints.length / 3 * 4];
+            for (int i = 0; i < color1.length; i = i + 4) {
+                color1[i + 0] = 1.0f;
+                color1[i + 1] = 0.0f;
+                color1[i + 2] = 0.0f;
+                color1[i + 3] = 1.0f;
             }
 
 
-            for(int ii = 0; ii <9; ii+=3)
-            {
-                aRTagPoints[0+ii] = aRTagPoints[0+ii]-ameanX;
-                aRTagPoints[1+ii] = aRTagPoints[1+ii]-ameanY;
-                aRTagPoints[2+ii] = aRTagPoints[2+ii]-ameanZ;
+            for (int ii = 0; ii < 9; ii += 3) {
+                aRTagPoints[0 + ii] = aRTagPoints[0 + ii] - ameanX;
+                aRTagPoints[1 + ii] = aRTagPoints[1 + ii] - ameanY;
+                aRTagPoints[2 + ii] = aRTagPoints[2 + ii] - ameanZ;
 
-                skullMSARPoints[0+ii] = skullMSARPoints[0 + ii] - ameanX;
+                skullMSARPoints[0 + ii] = skullMSARPoints[0 + ii] - ameanX;
                 skullMSARPoints[1 + ii] = skullMSARPoints[1 + ii] - ameanY;
-                skullMSARPoints[2 + ii] = skullMSARPoints[2+ii]-ameanZ;
+                skullMSARPoints[2 + ii] = skullMSARPoints[2 + ii] - ameanZ;
             }
 
 
@@ -148,11 +149,20 @@ public class Arpoints {
             colorBuffer = RenderUtils.buildFloatBuffer(color);
             colorBuffer1 = RenderUtils.buildFloatBuffer(color1);
 
-        }else {
+        } else {
             Log.v("ProMarkerLoaded E*: ", "UnLoaded");
         }
 
     }
+
+    public float[] getSkullMSARPoints(){
+        return skullMSARPoints;
+    }
+
+    public int isLoaded(){
+        return loaded;
+    }
+
     public void draw(GL10 unused) {
 
         GLES10.glColorPointer(4, GLES10.GL_FLOAT, 0, colorBuffer);
@@ -168,8 +178,6 @@ public class Arpoints {
 
         GLES10.glDisableClientState(GLES10.GL_COLOR_ARRAY);
         GLES10.glDisableClientState(GLES10.GL_VERTEX_ARRAY);
-
-
 
 
         GLES10.glColorPointer(4, GLES10.GL_FLOAT, 0, colorBuffer1);

@@ -95,7 +95,7 @@ public abstract class ARActivity extends Activity implements CameraEventListener
 	/**
 	 * GL surface to render the virtual objects	 
 	 */
-	private GLSurfaceView glView;	
+	protected GLSurfaceView glView;
 	
 	/**
 	 *  Renderer to use. This is provided by the subclass using {@link supplyRenderer()}.

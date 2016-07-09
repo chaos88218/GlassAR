@@ -3,11 +3,10 @@ package com.example.miles.glassar;
 import android.opengl.GLES10;
 import android.opengl.GLES20;
 
+import com.example.miles.glassar.LoaderNCalculater.FileReader;
 import com.example.miles.glassar.Models.Model;
 import com.example.miles.glassar.Models.OSP;
 import com.example.miles.glassar.Registration.ARRegistration;
-import com.example.miles.glassar.Registration.Arpoints;
-import com.example.miles.glassar.Registration.ProMarker;
 
 import org.artoolkit.ar.base.ARToolKit;
 import org.artoolkit.ar.base.rendering.Cube;
@@ -16,13 +15,6 @@ import org.artoolkit.ar.base.rendering.RenderUtils;
 import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
-
-import static com.example.miles.glassar.Registration.ARRegistration.ReAngle1;
-import static com.example.miles.glassar.Registration.ARRegistration.ReAngle2;
-import static com.example.miles.glassar.Registration.ARRegistration.ReAxis1;
-import static com.example.miles.glassar.Registration.ARRegistration.ReAxis2;
-import static com.example.miles.glassar.Registration.ARRegistration.aRTransBackVec;
-import static com.example.miles.glassar.Registration.ARRegistration.aRTransVec;
 
 /**
  * A very simple Renderer that adds a marker and draws a cube on it.
@@ -35,24 +27,23 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
     float[] lightPos = new float[]{100.0f, -130.0f, 140.0f, 0.0f};
 
     float[] aRMatrix = new float[16];
+    float[] drawing_matrix = new float[16];
 
     private Cube cube = new Cube(10, 0, 0, 5);
-
-    private ProMarker proMarker;
-
     private Model skull;
     private Model maxilla;
     private Model mandible;
     private OSP osp1;
     private OSP osp2;
 
-    private Arpoints arpoints;
     private ARRegistration arRegistration;
 
     private boolean sTLLoadingCheck;
     private float sTLCheckSum = 0;
 
-    public static int[] AllSTLLoadingCheck = {0, 0, 0, 0, 0, 0, 0, 0};
+    public int[] AllSTLLoadingCheck = {0, 0, 0, 0, 0, 0, 0, 0};
+    public float[] ARS;
+    public float[] ART;
 
 
     /**
@@ -64,13 +55,14 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
         markerID = ARToolKit.getInstance().addMarker("single;Data/N_ART.pat;20");
         if (markerID < 0) return false;
         if (!sTLLoadingCheck){
-            MyARRenderer.AllSTLLoadingCheck = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
+            AllSTLLoadingCheck = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
             loadSTL.start();
         }
         return true;
     }
 
 
+    //TODO: read cali file in and use it
     @Override
     public void draw(GL10 gl) {
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
@@ -101,7 +93,6 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
         gl.glMatrixMode(GL10.GL_MODELVIEW);
 
 
-        //TODO: After reworking transformation, clean the static mess;
         if (ARToolKit.getInstance().queryMarkerVisible(markerID)) {
             aRMatrix = ARToolKit.getInstance().queryMarkerTransformation(markerID);
             if(sTLLoadingCheck)
@@ -113,10 +104,7 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
     //                arRegistration.draw(gl);
 
                     gl.glLoadMatrixf(aRMatrix, 0);
-                    gl.glTranslatef(aRTransBackVec[0], aRTransBackVec[1], aRTransBackVec[2]);
-                    gl.glRotatef(ReAngle2, ReAxis2[0], ReAxis2[1], ReAxis2[2]);
-                    gl.glRotatef(ReAngle1, ReAxis1[0], ReAxis1[1], ReAxis1[2]);
-                    gl.glTranslatef(aRTransVec[0], aRTransVec[1], aRTransVec[2]);
+                    gl.glMultMatrixf(drawing_matrix, 0);
                     skull.draw(gl);
     //                proMarker.draw(gl);
 
@@ -124,10 +112,7 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
                     maxilla.draw(gl);
 
                     gl.glLoadMatrixf(aRMatrix, 0);
-                    gl.glTranslatef(aRTransBackVec[0], aRTransBackVec[1], aRTransBackVec[2]);
-                    gl.glRotatef(ReAngle2, ReAxis2[0], ReAxis2[1], ReAxis2[2]);
-                    gl.glRotatef(ReAngle1, ReAxis1[0], ReAxis1[1], ReAxis1[2]);
-                    gl.glTranslatef(aRTransVec[0], aRTransVec[1], aRTransVec[2]);
+                    gl.glMultMatrixf(drawing_matrix, 0);
                     gl.glMultMatrixf(MainActivity.file2Matrix, 0);
                     mandible.draw(gl);
                 }
@@ -135,10 +120,7 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
                 GLES10.glEnable(GLES20.GL_BLEND);
                 GLES10.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
                 gl.glLoadMatrixf(aRMatrix, 0);
-                gl.glTranslatef(aRTransBackVec[0], aRTransBackVec[1], aRTransBackVec[2]);
-                gl.glRotatef(ReAngle2, ReAxis2[0], ReAxis2[1], ReAxis2[2]);
-                gl.glRotatef(ReAngle1, ReAxis1[0], ReAxis1[1], ReAxis1[2]);
-                gl.glTranslatef(aRTransVec[0], aRTransVec[1], aRTransVec[2]);
+                gl.glMultMatrixf(drawing_matrix, 0);
                 osp1.draw(gl);
 
                 gl.glMultMatrixf(MainActivity.file2Matrix, 0);
@@ -147,7 +129,7 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
             }
             else
             {
-                sTLCheckSum = AllSTLLoadingCheck[0]+AllSTLLoadingCheck[1]+AllSTLLoadingCheck[2]+AllSTLLoadingCheck[3]+AllSTLLoadingCheck[4]+AllSTLLoadingCheck[5]+AllSTLLoadingCheck[6]+AllSTLLoadingCheck[7];
+                sTLCheckSum = getAllSTLLoadingCheck_sum();
                 gl.glLoadMatrixf(aRMatrix, 0);
                 gl.glFrontFace(gl.GL_CW);
                 gl.glRotatef(180.0f / 8.0f * sTLCheckSum, 0, 0, 1);
@@ -158,33 +140,47 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
         }
     }
 
+    public int getAllSTLLoadingCheck_index(int n){
+        return AllSTLLoadingCheck[n];
+    }
 
-    // TODO: Add loading Cali-file(two options)
+    public int getAllSTLLoadingCheck_sum(){
+        int a = 0;
+        for (int i = 0; i < AllSTLLoadingCheck.length; i++){
+            a += AllSTLLoadingCheck[i];
+        }
+        return a;
+    }
+
     Thread loadSTL = new Thread(new Runnable() {
         @Override
         public void run() {
-            proMarker = new ProMarker("arproject.txt");
+            ARS = FileReader.ARSReadTxt("calipara.txt");
+            if(ARS[0] != Float.NaN){AllSTLLoadingCheck[0] = 1;}
+
+            ART = FileReader.ARTReadBinary("optical_param_left.dat");
+            if(ART[0] != Float.NaN){AllSTLLoadingCheck[1] = 1;}
 
             skull = new Model("skull.stl");
-            AllSTLLoadingCheck[1] = skull.isLoaded();
+            AllSTLLoadingCheck[2] = skull.isLoaded();
 
             maxilla = new Model("maxilla.stl");
-            AllSTLLoadingCheck[2] = maxilla.isLoaded();
+            AllSTLLoadingCheck[3] = maxilla.isLoaded();
 
             mandible = new Model("mandible.stl");
-            AllSTLLoadingCheck[3] = mandible.isLoaded();
+            AllSTLLoadingCheck[4] = mandible.isLoaded();
 
             osp1 = new OSP("max_OSP.stl", new float[]{0, 1, 0});
-            AllSTLLoadingCheck[4] = osp1.isLoaded();
+            AllSTLLoadingCheck[5] = osp1.isLoaded();
 
             osp2 = new OSP("man_OSP.stl", new float[]{0, 0, 1});
-            AllSTLLoadingCheck[5] = osp2.isLoaded();
+            AllSTLLoadingCheck[6] = osp2.isLoaded();
 
-            arpoints = new Arpoints("arpoints.txt");
             arRegistration = new ARRegistration();
+            AllSTLLoadingCheck[7] = arRegistration.isLoaded();
 
-            if(AllSTLLoadingCheck[0]+AllSTLLoadingCheck[1]+AllSTLLoadingCheck[2]+AllSTLLoadingCheck[3]+AllSTLLoadingCheck[4]+AllSTLLoadingCheck[5]+AllSTLLoadingCheck[6]+AllSTLLoadingCheck[7] == 8)
-            { sTLLoadingCheck = true;}
+            if(getAllSTLLoadingCheck_sum() == 8)
+            { sTLLoadingCheck = true; drawing_matrix = arRegistration.drawing_matrix();}
         }
     });
 }
