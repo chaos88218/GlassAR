@@ -2,6 +2,8 @@ package com.example.miles.glassar;
 
 import android.opengl.GLES10;
 import android.opengl.GLES20;
+import android.opengl.GLU;
+import android.util.Log;
 
 import com.example.miles.glassar.LoaderNCalculater.FileReader;
 import com.example.miles.glassar.Models.Model;
@@ -30,6 +32,7 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
     float[] drawing_matrix = new float[16];
 
     private Cube cube = new Cube(10, 0, 0, 5);
+    private Cube test = new Cube(20, 0, 0, 10);
     private Model skull;
     private Model maxilla;
     private Model mandible;
@@ -38,10 +41,12 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
 
     private ARRegistration arRegistration;
 
+
     private boolean sTLLoadingCheck;
     private float sTLCheckSum = 0;
 
     public int[] AllSTLLoadingCheck = {0, 0, 0, 0, 0, 0, 0, 0};
+    public float rate;
     public float[] ARS;
     public float[] ART;
 
@@ -54,13 +59,21 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
 
         markerID = ARToolKit.getInstance().addMarker("single;Data/N_ART.pat;20");
         if (markerID < 0) return false;
-        if (!sTLLoadingCheck){
+        if (!sTLLoadingCheck) {
             AllSTLLoadingCheck = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
             loadSTL.start();
         }
         return true;
     }
 
+
+
+    @Override
+    public void onSurfaceChanged(GL10 gl, int w, int h) {
+        super.onSurfaceChanged(gl, w, h);
+        rate = (float) w / (float) h;
+        Log.d("rate", rate + "");
+    }
 
     //TODO: read cali file in and use it
     @Override
@@ -73,7 +86,21 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
 
         // Apply the ARToolKit projection matrix
         gl.glMatrixMode(GL10.GL_PROJECTION);
-        gl.glLoadMatrixf(ARToolKit.getInstance().getProjectionMatrix(), 0);
+        if (MainActivity.STCorN) {
+            if (AllSTLLoadingCheck[0] == 1) {
+                gl.glLoadIdentity();
+                GLU.gluPerspective(gl, ARS[0], rate, 1f, 10000.0f);
+            } else {
+                gl.glLoadMatrixf(ARToolKit.getInstance().getProjectionMatrix(), 0);
+            }
+        } else {
+            if (AllSTLLoadingCheck[1] == 1) {
+                gl.glLoadIdentity();
+                GLU.gluPerspective(gl, ART[0], rate, 1f, 10000.0f);
+            } else {
+                gl.glLoadMatrixf(ARToolKit.getInstance().getProjectionMatrix(), 0);
+            }
+        }
 
         gl.glEnable(GL10.GL_CULL_FACE);
         gl.glShadeModel(GL10.GL_SMOOTH);
@@ -95,23 +122,22 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
 
         if (ARToolKit.getInstance().queryMarkerVisible(markerID)) {
             aRMatrix = ARToolKit.getInstance().queryMarkerTransformation(markerID);
-            if(sTLLoadingCheck)
-            {
-                if(MainActivity.modelViewable)
-                {
-                    gl.glLoadMatrixf(aRMatrix, 0);
-    //                arpoints.draw(gl);
-    //                arRegistration.draw(gl);
+            if (sTLLoadingCheck) {
+                if (MainActivity.modelViewable) {
+                    load_matrix(gl);
+                    test.draw(gl);
+                    //                arpoints.draw(gl);
+                    //                arRegistration.draw(gl);
 
-                    gl.glLoadMatrixf(aRMatrix, 0);
+                    load_matrix(gl);
                     gl.glMultMatrixf(drawing_matrix, 0);
                     skull.draw(gl);
-    //                proMarker.draw(gl);
+                    //                proMarker.draw(gl);
 
                     gl.glMultMatrixf(MainActivity.file1Matrix, 0);
                     maxilla.draw(gl);
 
-                    gl.glLoadMatrixf(aRMatrix, 0);
+                    load_matrix(gl);
                     gl.glMultMatrixf(drawing_matrix, 0);
                     gl.glMultMatrixf(MainActivity.file2Matrix, 0);
                     mandible.draw(gl);
@@ -119,34 +145,50 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
 
                 GLES10.glEnable(GLES20.GL_BLEND);
                 GLES10.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-                gl.glLoadMatrixf(aRMatrix, 0);
+                load_matrix(gl);
                 gl.glMultMatrixf(drawing_matrix, 0);
                 osp1.draw(gl);
 
                 gl.glMultMatrixf(MainActivity.file2Matrix, 0);
                 osp2.draw(gl);
                 GLES10.glDisable(GLES20.GL_BLEND);
-            }
-            else
-            {
+            } else {
                 sTLCheckSum = getAllSTLLoadingCheck_sum();
-                gl.glLoadMatrixf(aRMatrix, 0);
+                load_matrix(gl);
                 gl.glFrontFace(gl.GL_CW);
                 gl.glRotatef(180.0f / 8.0f * sTLCheckSum, 0, 0, 1);
-                gl.glTranslatef(0, 0 , 16.0f - 16.0f / 8.0f * sTLCheckSum);
+                gl.glTranslatef(0, 0, 16.0f - 16.0f / 8.0f * sTLCheckSum);
                 cube.draw(gl);
                 gl.glFrontFace(gl.GL_CCW);
             }
         }
     }
 
-    public int getAllSTLLoadingCheck_index(int n){
+
+    private void load_matrix(GL10 gl) {
+        if (MainActivity.STCorN) {
+            if (AllSTLLoadingCheck[0] == 1) {
+                gl.glLoadMatrixf(ARS, 1);
+            } else {
+                gl.glLoadIdentity();
+            }
+        } else {
+            if (AllSTLLoadingCheck[1] == 1) {
+                gl.glLoadMatrixf(ART, 2);
+            } else {
+                gl.glLoadIdentity();
+            }
+        }
+        gl.glMultMatrixf(aRMatrix, 0);
+    }
+
+    public int getAllSTLLoadingCheck_index(int n) {
         return AllSTLLoadingCheck[n];
     }
 
-    public int getAllSTLLoadingCheck_sum(){
+    public int getAllSTLLoadingCheck_sum() {
         int a = 0;
-        for (int i = 0; i < AllSTLLoadingCheck.length; i++){
+        for (int i = 0; i < AllSTLLoadingCheck.length; i++) {
             a += AllSTLLoadingCheck[i];
         }
         return a;
@@ -155,11 +197,15 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
     Thread loadSTL = new Thread(new Runnable() {
         @Override
         public void run() {
-            ARS = FileReader.ARSReadTxt("calipara.txt");
-            if(ARS[0] != Float.NaN){AllSTLLoadingCheck[0] = 1;}
+            ARS = FileReader.ARSReadTxt("HECmatrix.txt");
+            if (ARS[0] != Float.NaN) {
+                AllSTLLoadingCheck[0] = 1;
+            }
 
             ART = FileReader.ARTReadBinary("optical_param_left.dat");
-            if(ART[0] != Float.NaN){AllSTLLoadingCheck[1] = 1;}
+            if (ART[0] != Float.NaN) {
+                AllSTLLoadingCheck[1] = 1;
+            }
 
             skull = new Model("skull.stl");
             AllSTLLoadingCheck[2] = skull.isLoaded();
@@ -179,8 +225,10 @@ public class MyARRenderer extends org.artoolkit.ar.base.rendering.ARRenderer {
             arRegistration = new ARRegistration();
             AllSTLLoadingCheck[7] = arRegistration.isLoaded();
 
-            if(getAllSTLLoadingCheck_sum() == 8)
-            { sTLLoadingCheck = true; drawing_matrix = arRegistration.drawing_matrix();}
+            if (getAllSTLLoadingCheck_sum() == 8) {
+                sTLLoadingCheck = true;
+                drawing_matrix = arRegistration.drawing_matrix();
+            }
         }
     });
 }

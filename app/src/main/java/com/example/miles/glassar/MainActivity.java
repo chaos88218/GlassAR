@@ -3,7 +3,6 @@ package com.example.miles.glassar;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
-import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -42,7 +41,8 @@ public class MainActivity extends ARActivity {
 
     Handler mHandler = new Handler();
     private FrameLayout ARINLayout;
-    private MyARRenderer myARRenderer = new MyARRenderer();
+    private RelativeLayout ARLayout;
+    private static MyARRenderer myARRenderer = new MyARRenderer();
 
     private SiMESpeechRecognizer mRecognizer;
     private SiMESpeechRecognitionListener mListener;
@@ -59,14 +59,18 @@ public class MainActivity extends ARActivity {
     public EditText IPadd;
     public TextView LogMes;
 
+    private Boolean exit = false;
     int width;
     int height;
+    int temp_height;
+    float ARC;
     //****************************************************************Strings****************************************//
     String LogMsg = "**********LogMsg**********";
     private char[] patientID = new char[50];
     private char[] fileName1 = new char[50];
     private char[] fileName2 = new char[50];
     //****************************************************************Matrix****************************************//
+    protected static boolean STCorN;
     protected static final float[] file1Matrix = new float[16];
     protected static final float[] file2Matrix = new float[16];
     protected static final float[] fiveNumbers = new float[5];
@@ -75,13 +79,37 @@ public class MainActivity extends ARActivity {
     private boolean VOICE_SWITCH = false;
 
     @Override
+    public void onBackPressed() {
+        if (exit) {
+            finish(); // finish activity
+        } else {
+            Toast.makeText(this, "Press Back again to Exit.",
+                    Toast.LENGTH_SHORT).show();
+            exit = true;
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    exit = false;
+                }
+            }, 3 * 1000);
+
+        }
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
         setContentView(R.layout.activity_main);
+
+        Bundle bundle = this.getIntent().getExtras();
+        if (bundle != null) {
+            STCorN = bundle.getBoolean("STCorN");
+            ARC = bundle.getFloat("ARC");
+            Log.d("get-STCorN", STCorN + " " + ARC);
+        }
 
         DAout = (TextView) findViewById(R.id.DAText);
         DDout = (TextView) findViewById(R.id.DDText);
@@ -90,20 +118,14 @@ public class MainActivity extends ARActivity {
         PDDout = (TextView) findViewById(R.id.PDDText);
 
         SockConn = (Button) findViewById(R.id.SockBut);
+        SockConn.setOnClickListener(Connectlistener);
 
-        RelativeLayout ARLayout = (RelativeLayout) findViewById(R.id.ARLayout);
+        ARLayout = (RelativeLayout) findViewById(R.id.ARLayout);
         ARINLayout = (FrameLayout) findViewById(R.id.ARINLayout);
         ARINLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                GL_TRANSLUCENT = !GL_TRANSLUCENT;
-                if (GL_TRANSLUCENT) {
-                    glView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
-                    Log.e("GL", "GL_TRANSLUCENT");
-                } else {
-                    glView.getHolder().setFormat(PixelFormat.RGB_565);
-                    Log.e("GL", "RGB_565");
-                }
+                Translucent();
             }
         });
 
@@ -111,17 +133,12 @@ public class MainActivity extends ARActivity {
         LogMes = (TextView) findViewById(R.id.LogMesg);
         LogMes.setMovementMethod(new ScrollingMovementMethod());
 
+        //****Full Screen****//
         Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        width = size.x;
-        height = (int) (width * 3.0f / 4.0f);
-
-        RelativeLayout.LayoutParams ll = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT);
-        ll.setMargins(0, (int) -((height - size.y) / 2.0f), 0, (int) -((height - size.y) / 2.0f));
-        ARLayout.setLayoutParams(ll);
-
-        SockConn.setOnClickListener(Connectlistener);
+        width = display.getWidth();
+        temp_height = display.getHeight();
+        full(STCorN);
+        //****Full Screen****//
 
         mRecognizer = new SiMESpeechRecognizer(this);
         mRecognizer.setLanguageModelFiles("5467.dic", "5467.lm");
@@ -149,7 +166,6 @@ public class MainActivity extends ARActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Log.e("resultword: ", resultword);
                         Toast.makeText(MainActivity.this, resultword, Toast.LENGTH_SHORT).show();
                         if (resultword == "VOICE") {
                             VOICE_SWITCH = !VOICE_SWITCH;
@@ -272,6 +288,44 @@ public class MainActivity extends ARActivity {
         }
     }
 
+    //****//
+    //Listeners
+    //****//
+    protected View.OnClickListener Connectlistener = new View.OnClickListener() {
+        public void onClick(View v) {
+            SockConn.setEnabled(false);
+            ppthread.start();
+        }
+    };
+
+    //****//
+    //functions
+    //****//
+    private void full(boolean yy) {
+        if (yy) {
+            height = (int) (width * 3.0f / 4.0f);
+        } else {
+            height = (int) (width / ARC);
+        }
+        Log.d("height", height + "");
+        RelativeLayout.LayoutParams ll = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT);
+        ll.setMargins(0, (int) -((height - temp_height) / 2.0f), 0, (int) -((height - temp_height) / 2.0f));
+        ARLayout.setLayoutParams(ll);
+    }
+
+    private void Translucent() {
+        GL_TRANSLUCENT = !GL_TRANSLUCENT;
+        if (GL_TRANSLUCENT) {
+            glView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        } else {
+            glView.getHolder().setFormat(PixelFormat.RGB_565);
+        }
+    }
+
+
+    //****//
+    //handler functions
+    //****//
     public void SendtoUI(final String string) {
         mHandler.post(new Runnable() {
             @Override
@@ -322,13 +376,10 @@ public class MainActivity extends ARActivity {
         });
     }
 
-    protected View.OnClickListener Connectlistener = new View.OnClickListener() {
-        public void onClick(View v) {
-            SockConn.setEnabled(false);
-            ppthread.start();
-        }
-    };
 
+    //****//
+    //threads
+    //****//
     final Thread ppthread = new Thread(
             new Runnable() {
                 @Override
@@ -379,7 +430,7 @@ public class MainActivity extends ARActivity {
                                     SendtoUI("[ Data: Received: \n" + "ID: " + String.valueOf(patientID, 0, id) + "\nFile1: " + String.valueOf(fileName1, 0, f1) + "\nFile2: " + String.valueOf(fileName2, 0, f2) + " ]");
 
                                     outS.write(("C1" + '\0').getBytes(), 0, 3);
-//*********************************************loop************************************
+                                    //********************loop********************
                                     inS.read(rebyte);
                                     if (rebyte[0] == 'S' && rebyte[1] == '3') {
                                         SendtoUI("Sever: Communicating......");
@@ -388,7 +439,7 @@ public class MainActivity extends ARActivity {
 
                                             int floatArraycount = 0;
                                             char[] tempCharArray = new char[30];
-                                            //******************************************fileName1-Maxilla*****************************************************************************
+                                            //********************fileName1-Maxilla********************
                                             outS.write(("C5" + String.valueOf(fileName1, 0, f1) + '\0').getBytes(), 0, 3 + f1);
                                             int MatrixLength = inS.read(rebyte);
 
@@ -410,7 +461,7 @@ public class MainActivity extends ARActivity {
                                                 SendtoUI("Wrong Communication: S5-1");
                                             }
 
-                                            //*****************************************fileName2-Mandible******************************************************************************
+                                            //********************fileName2-Mandible********************
 
                                             floatArraycount = 0;
                                             outS.write(("C5" + String.valueOf(fileName2, 0, f2) + '\0').getBytes(), 0, 3 + f2);
@@ -443,7 +494,7 @@ public class MainActivity extends ARActivity {
 //                                                }
 //
 //                                                Log.w("rebyte", test);
-                                            //****************************fiveNumbers*******************************************************************************************
+                                            //********************fiveNumbers********************
                                             floatArraycount = 0;
                                             outS.write(("C6" + '\0').getBytes(), 0, 3);
                                             MatrixLength = inS.read(rebyte);
@@ -473,14 +524,14 @@ public class MainActivity extends ARActivity {
                                             FiveNumbers(3, fiveNumbers[2]);
                                             FiveNumbers(4, fiveNumbers[3]);
                                             FiveNumbers(5, fiveNumbers[4]);
-                                            //***********************************************************************************************************************
+                                            //****************************************
                                         }
                                         inS.close();
                                         outS.close();
                                     } else {
                                         SendtoUI("Sever: Wrong Communication S3");
                                     }
-//*********************************************loop************************************
+                                    //********************loop********************
                                 } else {
                                     SendtoUI("Sever: Wrong Communication S1");
                                 }
